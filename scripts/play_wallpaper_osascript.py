@@ -37,6 +37,16 @@ def list_frames(folder: Path) -> list[Path]:
     return [frame for _, frame in indexed_frames]
 
 
+def is_screen_saver_active() -> bool:
+    result = subprocess.run(
+        ["/usr/bin/pgrep", "-qx", "ScreenSaverEngine"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    return result.returncode == 0
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Wallpaper playback using osascript directly.")
     parser.add_argument(
@@ -49,6 +59,12 @@ def main() -> None:
         type=float,
         default=2.0,
         help="Frames per second for wallpaper playback.",
+    )
+    parser.add_argument(
+        "--pause-when-locked",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Pause updates while screen saver / lock screen is active.",
     )
     args = parser.parse_args()
 
@@ -71,7 +87,12 @@ def main() -> None:
 
     try:
         while True:
+            if args.pause_when_locked and is_screen_saver_active():
+                time.sleep(1.0)
+                continue
             for frame in frames:
+                if args.pause_when_locked and is_screen_saver_active():
+                    break
                 set_desktop_background(frame)
                 time.sleep(frame_delay)
     except KeyboardInterrupt:
