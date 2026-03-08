@@ -1,20 +1,74 @@
-from appscript import app, mactypes
-import os
+import argparse
+import re
 import time
 from pathlib import Path
 
-folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'video/', )
+from appscript import app, mactypes
 
-frame_rate = 2
+FRAME_FILE_PATTERN = re.compile(r"^frame_(\d+)\.(png|jpe?g)$", re.IGNORECASE)
 
-def set_desktop_background(filename):
-    app('Finder').desktop_picture.set(mactypes.File(filename))
 
-folder_list = os.listdir(folder)
-folder_list.sort()
-folder_list.pop(0)
+def set_desktop_background(filename: Path) -> None:
+    app("Finder").desktop_picture.set(mactypes.File(str(filename)))
 
-while True:
-    for filename in folder_list:
-        set_desktop_background(folder+filename)
-        time.sleep(1/frame_rate)
+
+def list_frames(folder: Path) -> list[Path]:
+    indexed_frames = []
+    for file_path in folder.iterdir():
+        if not file_path.is_file():
+            continue
+
+        match = FRAME_FILE_PATTERN.match(file_path.name)
+        if not match:
+            continue
+
+        indexed_frames.append((int(match.group(1)), file_path))
+
+    indexed_frames.sort(key=lambda item: item[0])
+    return [frame for _, frame in indexed_frames]
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Play extracted GIF frames as wallpaper.")
+    parser.add_argument(
+        "--folder",
+        default=str(Path(__file__).resolve().parent / "video"),
+        help="Folder containing frame_XXXXX.png/.jpg files.",
+    )
+    parser.add_argument(
+        "--fps",
+        type=float,
+        default=2.0,
+        help="Frames per second for wallpaper playback.",
+    )
+    args = parser.parse_args()
+
+    frame_rate = args.fps
+    if frame_rate <= 0:
+        print("FPS must be greater than 0.")
+        return
+
+    folder = Path(args.folder).expanduser()
+    if not folder.exists():
+        print(f"Frame folder does not exist: {folder}")
+        return
+
+    frames = list_frames(folder)
+    if not frames:
+        print(f"No frame files found in {folder}.")
+        return
+
+    frame_delay = 1.0 / frame_rate
+    print(f"Playing {len(frames)} frames from {folder} at {frame_rate} FPS. Press Ctrl+C to stop.")
+
+    try:
+        while True:
+            for frame in frames:
+                set_desktop_background(frame)
+                time.sleep(frame_delay)
+    except KeyboardInterrupt:
+        print("\nStopped wallpaper playback.")
+
+
+if __name__ == "__main__":
+    main()
