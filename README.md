@@ -6,10 +6,12 @@ Dynamic wallpaper script for MacOS that turns any GIF into a useable wallpaper
 
  * Clone the directory and cd into it
  * run `pip3 install -r requirements.txt`
- * run `python3 GIFtoImage.py`
- * enter the path to your GIF when requested
+ * run `python3 GIFtoImage.py /path/to/your.gif`
  * now run `python3 wallpaper.py` and accept any permissions it asks you
 
+## Notes
 
-> (note that the default frame rate is set at 2fps for max performance. You can change this in wallpaper.py by changing the `frame_rate` variable)
-
+ * Frames are exported as lossless PNG files (`video/frame_00000.png`, etc.) to keep original quality.
+ * Default playback speed is 2 FPS. You can change it with `python3 wallpaper.py --fps 4`.
+ * Stop playback with `Ctrl+C`.
+ * `method#2.py` is an alternative playback method via `osascript`.
