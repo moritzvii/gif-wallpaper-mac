@@ -1,25 +1,81 @@
+import argparse
+import re
 import subprocess
-import os
 import time
+from pathlib import Path
 
-SCRIPT = """/usr/bin/osascript<<END
-tell application "Finder"
-set desktop picture to POSIX file "%s"
-end tell
-END"""
-folder = "/Users/suchitvemula/Desktop/Coding/DynamicWallpaper/video/"
+FRAME_FILE_PATTERN = re.compile(r"^frame_(\d+)\.(png|jpe?g)$", re.IGNORECASE)
+OSA_SCRIPT_PREFIX = [
+    "/usr/bin/osascript",
+    "-e",
+    "on run argv",
+    "-e",
+    'tell application "Finder" to set desktop picture to POSIX file (item 1 of argv)',
+    "-e",
+    "end run",
+]
 
-frame_rate = 24
 
-def set_desktop_background(filename):
-    print(SCRIPT%filename)
-    subprocess.Popen(SCRIPT%filename, shell=True)
+def set_desktop_background(filename: Path) -> None:
+    subprocess.run(OSA_SCRIPT_PREFIX + [str(filename)], check=True)
 
-folder_list = os.listdir(folder)
-folder_list.sort()
-folder_list.pop(0)
 
-while True:
-    for filename in folder_list:
-        set_desktop_background(folder+filename)
-        time.sleep(1/frame_rate)
+def list_frames(folder: Path) -> list[Path]:
+    indexed_frames = []
+    for file_path in folder.iterdir():
+        if not file_path.is_file():
+            continue
+
+        match = FRAME_FILE_PATTERN.match(file_path.name)
+        if not match:
+            continue
+
+        indexed_frames.append((int(match.group(1)), file_path))
+
+    indexed_frames.sort(key=lambda item: item[0])
+    return [frame for _, frame in indexed_frames]
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Wallpaper playback using osascript directly.")
+    parser.add_argument(
+        "--folder",
+        default=str(Path(__file__).resolve().parent / "video"),
+        help="Folder containing frame_XXXXX.png/.jpg files.",
+    )
+    parser.add_argument(
+        "--fps",
+        type=float,
+        default=2.0,
+        help="Frames per second for wallpaper playback.",
+    )
+    args = parser.parse_args()
+
+    if args.fps <= 0:
+        print("FPS must be greater than 0.")
+        return
+
+    folder = Path(args.folder).expanduser()
+    if not folder.exists():
+        print(f"Frame folder does not exist: {folder}")
+        return
+
+    frames = list_frames(folder)
+    if not frames:
+        print(f"No frame files found in {folder}.")
+        return
+
+    frame_delay = 1.0 / args.fps
+    print(f"Playing {len(frames)} frames from {folder} at {args.fps} FPS. Press Ctrl+C to stop.")
+
+    try:
+        while True:
+            for frame in frames:
+                set_desktop_background(frame)
+                time.sleep(frame_delay)
+    except KeyboardInterrupt:
+        print("\nStopped wallpaper playback.")
+
+
+if __name__ == "__main__":
+    main()
