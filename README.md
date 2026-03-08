@@ -27,4 +27,6 @@ Dynamic wallpaper script for MacOS that turns any GIF into a useable wallpaper
 
  * Frames are exported as lossless PNG files (`video/frame_00000.png`, etc.) to keep original quality.
  * Use `--output` on extraction and `--folder` on playback to customize directories.
+ * For ultrawide/widescreen monitors, extraction uses `--size auto` by default and applies mirrored borders to avoid aggressive zoom (`--placement mirror-fill`).
+ * You can set size manually, e.g. `python3 scripts/extract_frames.py /path/to/your.gif --size 5120x1440`.
  * Stop playback with `Ctrl+C`.
