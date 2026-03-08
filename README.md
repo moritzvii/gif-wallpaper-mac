@@ -23,6 +23,12 @@ Dynamic wallpaper script for MacOS that turns any GIF into a useable wallpaper
  * Alternative playback backend:
    `python3 scripts/play_wallpaper_osascript.py --fps 2`
 
+## Desktop Preview
+
+| Before (zoom/crop) | After (mirror-fill) |
+| --- | --- |
+| ![Before](assets/before.gif) | ![After](assets/after.gif) |
+
 ## Notes
 
  * Frames are exported as lossless PNG files (`video/frame_00000.png`, etc.) to keep original quality.

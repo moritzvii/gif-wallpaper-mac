@@ -50,46 +50,31 @@ def mirror_fill_frame(frame: Image.Image, target_size: tuple[int, int]) -> Image
     resized_height = max(1, int(round(source_height * scale)))
 
     resized = frame.resize((resized_width, resized_height), Image.Resampling.LANCZOS)
-    canvas = Image.new("RGBA", (target_width, target_height))
-
     x_offset = (target_width - resized_width) // 2
     y_offset = (target_height - resized_height) // 2
+
+    # Fill the background with mirrored tiles of the resized frame.
+    # This avoids stretching mirror strips and keeps the original aspect ratio.
+    canvas = Image.new("RGBA", (target_width, target_height))
+
+    min_tile_x = -((x_offset + resized_width - 1) // resized_width) - 1
+    max_tile_x = ((target_width - x_offset + resized_width - 1) // resized_width) + 1
+    min_tile_y = -((y_offset + resized_height - 1) // resized_height) - 1
+    max_tile_y = ((target_height - y_offset + resized_height - 1) // resized_height) + 1
+
+    for tile_x in range(min_tile_x, max_tile_x + 1):
+        for tile_y in range(min_tile_y, max_tile_y + 1):
+            tile = resized
+            if tile_x % 2 != 0:
+                tile = tile.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+            if tile_y % 2 != 0:
+                tile = tile.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+            paste_x = x_offset + tile_x * resized_width
+            paste_y = y_offset + tile_y * resized_height
+            canvas.paste(tile, (paste_x, paste_y))
+
+    # Paste the main frame on top so the center stays exactly as intended.
     canvas.paste(resized, (x_offset, y_offset))
-
-    left_gap = x_offset
-    right_gap = target_width - (x_offset + resized_width)
-    top_gap = y_offset
-    bottom_gap = target_height - (y_offset + resized_height)
-
-    if left_gap > 0:
-        sample_width = min(resized_width, max(1, min(left_gap * 2, resized_width)))
-        left_strip = resized.crop((0, 0, sample_width, resized_height)).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
-        left_fill = left_strip.resize((left_gap, resized_height), Image.Resampling.BICUBIC)
-        canvas.paste(left_fill, (0, y_offset))
-
-    if right_gap > 0:
-        sample_width = min(resized_width, max(1, min(right_gap * 2, resized_width)))
-        right_strip = resized.crop((resized_width - sample_width, 0, resized_width, resized_height))
-        right_strip = right_strip.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
-        right_fill = right_strip.resize((right_gap, resized_height), Image.Resampling.BICUBIC)
-        canvas.paste(right_fill, (x_offset + resized_width, y_offset))
-
-    if top_gap > 0:
-        sample_height = min(resized_height, max(1, min(top_gap * 2, resized_height)))
-        top_strip = canvas.crop((0, y_offset, target_width, y_offset + sample_height))
-        top_strip = top_strip.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
-        top_fill = top_strip.resize((target_width, top_gap), Image.Resampling.BICUBIC)
-        canvas.paste(top_fill, (0, 0))
-
-    if bottom_gap > 0:
-        sample_height = min(resized_height, max(1, min(bottom_gap * 2, resized_height)))
-        bottom_strip = canvas.crop(
-            (0, y_offset + resized_height - sample_height, target_width, y_offset + resized_height)
-        )
-        bottom_strip = bottom_strip.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
-        bottom_fill = bottom_strip.resize((target_width, bottom_gap), Image.Resampling.BICUBIC)
-        canvas.paste(bottom_fill, (0, y_offset + resized_height))
-
     return canvas
 
 
