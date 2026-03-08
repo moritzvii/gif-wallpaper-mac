@@ -1,37 +1,58 @@
-from PIL import Image
-import os
-from pathlib import Path
+import argparse
 import shutil
+from pathlib import Path
 
-def gif_to_jpeg(input_gif, output_folder):
-    if(os.path.exists(output_folder)):
+from PIL import Image
+
+
+def gif_to_png(input_gif: Path, output_folder: Path) -> int:
+    if output_folder.exists():
         shutil.rmtree(output_folder)
-        os.mkdir(output_folder)
-    else:
-        os.mkdir(output_folder)
+    output_folder.mkdir(parents=True, exist_ok=True)
+
     try:
         im = Image.open(input_gif)
-    except IOError:
-        print("Can't load", input_gif)
-        return
+    except OSError:
+        print(f"Can't load {input_gif}")
+        return 0
 
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-
+    frame_index = 0
     try:
         while True:
-            im2 = im.convert('RGBA')
-            im2.load()
-            background = Image.new("RGB", im2.size, (255, 255, 255))
-            background.paste(im2, mask=im2.split()[3])
-            output_file = os.path.join(output_folder, f'frame_{im.tell():03d}.jpg')
-            background.save(output_file, 'JPEG', quality=80)
+            frame = im.convert("RGBA")
+            output_file = output_folder / f"frame_{frame_index:05d}.png"
+            # PNG is lossless; this keeps frame quality intact.
+            frame.save(output_file, "PNG", optimize=False, compress_level=0)
+            frame_index += 1
             im.seek(im.tell() + 1)
     except EOFError:
-        pass  # end of sequence
+        pass
+
+    return frame_index
 
 
-input_gif = input('Enter Path To GIF: ')
-output_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'video', )
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Extract GIF frames as lossless PNG files.")
+    parser.add_argument("input", nargs="?", help="Path to input GIF.")
+    parser.add_argument(
+        "--output",
+        default=str(Path(__file__).resolve().parent / "video"),
+        help="Output folder for extracted frames.",
+    )
+    args = parser.parse_args()
 
-gif_to_jpeg(input_gif, output_folder)
+    input_value = args.input or input("Enter Path To GIF: ").strip()
+    input_gif = Path(input_value).expanduser()
+    output_folder = Path(args.output).expanduser()
+
+    if not input_gif.exists():
+        print(f"Input GIF does not exist: {input_gif}")
+        return
+
+    frame_count = gif_to_png(input_gif, output_folder)
+    if frame_count:
+        print(f"Exported {frame_count} frames to {output_folder}")
+
+
+if __name__ == "__main__":
+    main()
