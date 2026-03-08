@@ -5,6 +5,7 @@ import time
 from pathlib import Path
 
 FRAME_FILE_PATTERN = re.compile(r"^frame_(\d+)\.(png|jpe?g)$", re.IGNORECASE)
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 OSA_SCRIPT_PREFIX = [
     "/usr/bin/osascript",
     "-e",
@@ -40,7 +41,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Wallpaper playback using osascript directly.")
     parser.add_argument(
         "--folder",
-        default=str(Path(__file__).resolve().parent / "video"),
+        default=str(PROJECT_ROOT / "video"),
         help="Folder containing frame_XXXXX.png/.jpg files.",
     )
     parser.add_argument(

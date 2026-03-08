@@ -6,6 +6,7 @@ from pathlib import Path
 from appscript import app, mactypes
 
 FRAME_FILE_PATTERN = re.compile(r"^frame_(\d+)\.(png|jpe?g)$", re.IGNORECASE)
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 def set_desktop_background(filename: Path) -> None:
@@ -32,7 +33,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Play extracted GIF frames as wallpaper.")
     parser.add_argument(
         "--folder",
-        default=str(Path(__file__).resolve().parent / "video"),
+        default=str(PROJECT_ROOT / "video"),
         help="Folder containing frame_XXXXX.png/.jpg files.",
     )
     parser.add_argument(

@@ -4,6 +4,8 @@ from pathlib import Path
 
 from PIL import Image
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
 
 def gif_to_png(input_gif: Path, output_folder: Path) -> int:
     if output_folder.exists():
@@ -36,7 +38,7 @@ def main() -> None:
     parser.add_argument("input", nargs="?", help="Path to input GIF.")
     parser.add_argument(
         "--output",
-        default=str(Path(__file__).resolve().parent / "video"),
+        default=str(PROJECT_ROOT / "video"),
         help="Output folder for extracted frames.",
     )
     args = parser.parse_args()
