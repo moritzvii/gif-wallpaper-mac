@@ -25,9 +25,16 @@ Dynamic wallpaper script for MacOS that turns any GIF into a useable wallpaper
 
 ## Desktop Preview
 
-| Before (zoom/crop) | After (mirror-fill) |
-| --- | --- |
-| ![Before](assets/before.gif) | ![After](assets/after.gif) |
+<table>
+  <tr>
+    <th>Before (zoom/crop)</th>
+    <th>After (mirror-fill)</th>
+  </tr>
+  <tr>
+    <td><img src="assets/example.gif" alt="Before" height="320" /></td>
+    <td><img src="assets/after.gif" alt="After" height="320" /></td>
+  </tr>
+</table>
 
 ## Notes
 
